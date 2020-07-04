@@ -1,27 +1,26 @@
-import copy
+""" User serializer definition """
+
 from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from rest_framework.validators import UniqueValidator
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
+from ..models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """ Defines user serializer behaviour. """
+
     email = serializers.EmailField(
-            validators=[UniqueValidator(queryset=User.objects.all())]
-        )
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'profession',
-                  'email', 'first_name', 'last_name')
+        fields = ["password", "profession", "email", "first_name",
+                  "last_name"]
 
     def create(self, validated_data):
-        aux = copy.deepcopy(validated_data)
-        if validated_data.get('password'):
-            aux['password'] = make_password(
-                validated_data['password']
-            )
-            user = User.objects.create(**aux)
-            return user
+        return User.objects.create(
+            **validated_data,
+            password=make_password(validated_data.pop("password")),
+            username=validated_data.get("email")
+        )
